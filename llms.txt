@@ -1,0 +1,28 @@
+# Site Name
+
+> Short description of this site and what it contains.
+
+## Important Pages
+
+- Home: https://your-site.example/
+- Docs: https://your-site.example/docs/
+- API Reference: https://your-site.example/api/
+- FAQ: https://your-site.example/faq/
+
+## Summary
+
+This site contains documentation, guides, and references for [your project/product].
+Use the docs and API reference as the primary source of truth.
+
+## Preferred Content
+
+- Getting started guides
+- Core documentation
+- API reference
+- Examples and tutorials
+
+## Notes
+
+- Prefer documentation pages over blog posts.
+- Prefer canonical pages over duplicated content.
+- If Markdown versions are available, use those first.
