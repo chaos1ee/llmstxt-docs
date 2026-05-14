@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>llmstxt-test — LLM 文档索引</title>
+    <title>llmstxt-docs — LLM 文档索引</title>
     <meta
       name="description"
-      content="面向 LLM 的项目文档集合：antd-schema、react-toolkit 等包的 Markdown 说明索引。"
+      content="llmstxt-docs：面向 LLM 的项目文档集合（antd-schema、react-toolkit 等），在线索引与 Markdown 入口。"
     />
     <style>
       :root {
@@ -139,23 +139,34 @@
       footer a:hover {
         color: var(--accent-hover);
       }
+      .usage-url {
+        margin: 0;
+        word-break: break-all;
+      }
+      .usage-url a {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .usage-url a:hover {
+        color: var(--accent-hover);
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header>
-        <h1>llmstxt-test</h1>
+        <h1>llmstxt-docs</h1>
         <p class="lead">
           面向 LLM（Cursor / Claude / Codex 等）阅读的项目文档集合。内容按
           <a href="https://llmstxt.org/">llms.txt</a> 思路组织：单文件、结构化 Markdown，便于模型检索与整篇引用。
         </p>
-        <p class="note">
-          <strong>说明：</strong>本仓库为文档仓库，不含运行时代码。下方链接指向同目录下的
-          <code>*.md</code> 文件；在本地用浏览器打开本页时，点击链接即可查看（部分浏览器对
-          <code>file://</code> 跨文件限制较严，若无法打开请使用静态服务器，例如
-          <code>npx serve .</code>）。
-        </p>
       </header>
+
+      <h2>使用说明</h2>
+      <p class="note">
+        在 Cursor、Claude、Codex 等对话里直接把本站链接发给模型，便于其按页面导航并打开链接到的 Markdown。使用的地址为
+        <span class="usage-url"><a href="https://chaos1ee.github.io/llmstxt-docs/">https://chaos1ee.github.io/llmstxt-docs/</a></span>。
+      </p>
 
       <h2>入口</h2>
       <ul class="cards">
@@ -185,13 +196,6 @@
           </a>
         </li>
       </ul>
-
-      <footer>
-        <p>
-          将 Markdown 交给模型时，可在 Cursor 中用 <code>@文件名</code> 引用，或在 CLI 中通过附件 /
-          <code>--file</code> 传入。
-        </p>
-      </footer>
     </div>
   </body>
 </html>
