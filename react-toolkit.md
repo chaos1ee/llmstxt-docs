@@ -4,7 +4,7 @@
 
 ## 安装
 
-本文对应已发布的 `@backend-platform/react-toolkit@1.4.1`。该版本移除游戏权限的“编辑”入口，各游戏直接展示权限类目，并让权限列表高度随内容收缩、最高为 480px。包含权限检查状态、失败重试和统一权限结果组件，按登录会话隔离权限缓存，并支持单独导入权限与菜单页面。保留 `Layout.navigation.permissionConfig` 的默认请求配置。
+本文对应已发布的 `@backend-platform/react-toolkit@1.4.2`。该版本修复主包类型声明缺失，发布包包含根入口及子路径对应的类型声明，TypeScript 项目可直接使用公开组件、hooks 和类型。游戏权限直接展示权限类目，列表高度随内容收缩、最高为 480px。包含权限检查状态、失败重试和统一权限结果组件，按登录会话隔离权限缓存，并支持单独导入权限与菜单页面。保留 `Layout.navigation.permissionConfig` 的默认请求配置。
 
 本包发布在公司 GitLab Registry。安装前，在项目 `.npmrc` 中配置 scope 与 token 环境变量引用：
 
@@ -17,7 +17,7 @@
 由本机或 CI 环境提供具备包读取权限的 `GITLAB_TOKEN`，然后安装：
 
 ```bash
-pnpm add @backend-platform/react-toolkit@1.4.1
+pnpm add @backend-platform/react-toolkit@1.4.2
 ```
 
 对等依赖由业务项目提供：
