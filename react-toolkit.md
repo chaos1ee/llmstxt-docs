@@ -4,7 +4,7 @@
 
 ## 安装
 
-本文对应已发布的 `@backend-platform/react-toolkit@1.3.0`。该版本新增 `Layout.navigation.permissionConfig`，用于配置导航权限请求的默认作用域及请求参数。
+本文对应已发布的 `@backend-platform/react-toolkit@1.4.0`。该版本新增权限检查状态、失败重试和统一权限结果组件，按登录会话隔离权限缓存，并支持单独导入权限与菜单页面。保留 `Layout.navigation.permissionConfig` 的默认请求配置。
 
 本包发布在公司 GitLab Registry。安装前，在项目 `.npmrc` 中配置 scope 与 token 环境变量引用：
 
@@ -17,7 +17,7 @@
 由本机或 CI 环境提供具备包读取权限的 `GITLAB_TOKEN`，然后安装：
 
 ```bash
-pnpm add @backend-platform/react-toolkit@1.3.0
+pnpm add @backend-platform/react-toolkit@1.4.0
 ```
 
 对等依赖由业务项目提供：
@@ -277,7 +277,7 @@ import type {
 说明：
 
 - `UserInfo`：JWT 解码后的用户信息，当前包含 `authorityId`、`exp`
-- `TokenSlice`：`token`、`user`、`setToken`、`clearToken`
+- `TokenSlice`：`token`、`sessionVersion`、`user`、`setToken`、`clearToken`。设置或清除 token 时递增 `sessionVersion`；该字段只在内存中用于隔离权限缓存，不持久化。
 - `GameSlice`：`appId`、`setAppId`
 - `LayoutSlice`：`collapsed`、`toggleCollapsed`
 - `NavSlice`：`openKeys`、`selectedKeys`、`setOpenKeys`、`setSelectedKeys`
@@ -326,7 +326,8 @@ import { Layout } from '@backend-platform/react-toolkit'
 - `navigation.permissionConfig` 为普通菜单项、子菜单和菜单组设置默认权限请求配置；`isGlobalMode: true` 发送 `App-ID: global`，`false` 使用当前游戏，未配置时保持原有默认行为
 - 菜单项的 `permissionConfig` 覆盖导航默认配置；同一权限码在全局和游戏作用域中分别查询与判断，保持作用域隔离
 - 菜单项的 `permissionConfig` 仅用于权限检查，不会传给 antd `Menu` 或 DOM 元素
-- 子项全部被过滤后父菜单也隐藏；权限加载结束且导航数组为空时，侧栏显示 `Nav.emptyDescription`，中文为「暂无菜单」；内容区仍由页面自身的权限保护决定是否显示
+- 子项全部被过滤后父菜单也隐藏；权限加载结束且导航数组为空时，侧栏显示 `Nav.emptyDescription`，中文为「暂无可访问菜单」。权限请求失败时显示错误与重试。
+- `Layout` 的菜单过滤不会自动保护对应路由；业务项目应使用 `RequireAuth` 显式包裹页面，菜单与路由共用权限配置。
 - `gameScoped` 为 `true` 时，顶栏会自动渲染 `GameSelect`
 - 内容区会被 `RequireGame` 包一层；未选择游戏时不会继续渲染子内容
 
@@ -399,9 +400,9 @@ import { AuthButton } from '@backend-platform/react-toolkit'
 
 源码行为要点：
 
-- 权限不足时按钮会被禁用
-- `showLoading` 为 `false` 时，加载中也会先禁用按钮
-- 当前实现里，只要最终是 disabled 状态，就会显示“无权限” Tooltip；包括你手动传入 `disabled`
+- 多个权限码中任一通过即可启用按钮。
+- 权限加载、拒绝或检查失败时禁用按钮；`showLoading` 控制加载指示。
+- 拒绝时提示无权限，检查失败时提示失败；手动设置 `disabled` 本身不会显示无权限提示。
 
 示例：
 
@@ -422,16 +423,17 @@ import { RequireAuth } from '@backend-platform/react-toolkit'
 作用：
 
 - 根据权限码决定是否渲染子树
-- 无权限时展示 403 页面
+- 无权限时保留当前 URL 并展示 403；加载时展示 Spin，检查失败时展示错误和重试按钮。
 
 `RequireAuthProps`：
 
 | 字段           | 类型                          | 说明                           |
 | -------------- | ----------------------------- | ------------------------------ |
-| `code`         | `string`                      | 权限码，必填                   |
+| `code`         | `string \| string[]`          | 权限码，必填；多个码要求全部通过 |
 | `config`       | `RequestOptions \| undefined` | 请求选项                       |
 | `redirectPath` | `string \| undefined`         | 403 页返回按钮目标，默认 `'/'` |
-| `children`     | `ReactNode`                   | 有权限时渲染                   |
+| `extra`        | `ReactNode`                   | 自定义 403 操作区；`null` 隐藏默认返回按钮 |
+| `children`     | `ReactNode`                   | 仅检查允许时挂载               |
 
 示例：
 
@@ -440,6 +442,17 @@ import { RequireAuth } from '@backend-platform/react-toolkit'
   <UserListPage />
 </RequireAuth>
 ```
+
+### `AccessDenied` / `PermissionError`
+
+```tsx
+import { AccessDenied, PermissionError } from '@backend-platform/react-toolkit'
+// 也可从 components/permissionResult 子路径导入
+```
+
+- `AccessDenied(props: AccessDeniedProps)`：统一 403 展示，不依赖 Router。props 为 `Omit<ResultProps, 'status'>`，默认使用无权限文案，可通过 `extra` 自定义操作。
+- `PermissionError({ onRetry })`：权限检查失败展示；`onRetry: () => void` 为必填，点击重试按钮时调用。
+- `QueryList`、`InfiniteList` 也复用上述组件，区分检查失败和确认无权限。
 
 ### `RequireGame`
 
@@ -486,7 +499,7 @@ import { UserDropdown } from '@backend-platform/react-toolkit'
 源码行为要点：
 
 - 展示的是 `user?.authorityId`
-- 退出时会调用 `toolkitStore.clear()`，然后跳转到 `loginPath`
+- 退出时调用 `toolkitStore.clear()`，移除 React Query 的权限查询，清空 KeepAlive 页面缓存，再跳转到 `loginPath`。需要位于 `QueryClientProvider` 内；未启用 KeepAlive 时清缓存为无操作。
 
 ### `useAuth`
 
@@ -509,7 +522,8 @@ useAuth(code?: string | string[], config?: RequestOptions)
 
 返回值：
 
-- 保留了 React Query 的常用字段，如 `isLoading`、`error`、`refetch`
+- 保留 React Query 的常用字段，如 `isLoading`、`error`、`refetch`。
+- 新增 `accessStatus: AuthStatus`，取值为 `loading`、`allowed`、`denied`、`error`；`AuthStatus` 从根入口和 `services` 子路径导出。多个权限码的 `accessStatus` 要求全部通过。
 - `data` 的形状会根据参数变化：
 
 | 调用方式                                  | `data` 类型               |
@@ -520,14 +534,15 @@ useAuth(code?: string | string[], config?: RequestOptions)
 
 源码行为要点：
 
-- 当 `code` 为空时不会发请求
-- 如果后端返回 `has_all`，单个或多个权限都会直接视为全部通过
-- `config.isGlobalMode` 会参与 queryKey，避免不同作用域缓存串用
+- 未配置 `code` 或传空数组时直接允许且不发请求；空字符串仍作为权限码检查。
+- 仅 `has_all === true` 或对应权限值严格为 `true` 时通过。
+- 查询键按权限码、认证配置、`isGlobalMode`、实际 app-id 请求头、API 地址及登录会话版本隔离，不包含 token。
+- 权限加载或请求失败时，`data` 不复用旧允许结果。请求不自动重试，使用 `refetch` 手动重试；权限错误由组件展示，不重复弹出全局错误通知，登录失效处理仍保留。
 
 示例：
 
 ```tsx
-const { data: canCreate, isLoading } = useAuth('user:create')
+const { data: canCreate, accessStatus, refetch } = useAuth('user:create')
 ```
 
 ### `useMenuList`
@@ -1428,6 +1443,7 @@ import type { Locale } from '@backend-platform/react-toolkit/locale'
 - `FormModal`
 - `GameSelect`
 - `RequireGame`
+- `Permission`（`failedDescription`、`retry`）
 - `UserDropdown`
 - `User`
 - `Role`
@@ -1435,6 +1451,8 @@ import type { Locale } from '@backend-platform/react-toolkit/locale'
 - `RoleDetail`
 - `InfiniteList`
 - `Nav`
+
+自行维护完整 `Locale` 对象的项目需要补充 `Permission.failedDescription` 与 `Permission.retry`；内置语言包已包含这两个字段。
 
 `1.2.0` 新增必填字段 `PermissionList.searchPlaceholder`，用于权限名称或编码搜索。内置简体中文、英文、日文和韩文文案已补齐；自行维护完整 `Locale` 对象时也需要提供该字段。
 
@@ -1555,6 +1573,23 @@ import { permissionRoutes } from '@backend-platform/react-toolkit'
 <Route path="permission/*">{permissionRoutes}</Route>
 ```
 
+### 单独绑定页面权限
+
+```tsx
+import { Route } from 'react-router'
+import { RequireAuth } from '@backend-platform/react-toolkit'
+import { UserList, UserDetail, RoleList, RoleDetail } from '@backend-platform/react-toolkit/routes/permission'
+import { MenuItemList, CreateMenuItem, UpdateMenuItem } from '@backend-platform/react-toolkit/routes/menu'
+import { CdkList, CdkExchangeList } from '@backend-platform/react-toolkit/routes/cdk'
+
+const userListAccess = { code: '100001', config: { isGlobalMode: true } }
+
+// 业务项目将相同 code / config 同时用于导航项和页面：
+<Route path="permission/user" element={<RequireAuth {...userListAccess}><UserList /></RequireAuth>} />
+```
+
+这些页面均为 lazy 组件，应放在 `Suspense` 内；`Layout` 已包含内容区的 Suspense。登录校验由业务项目处理。原有路由片段仍兼容。
+
 ### 内置角色权限编辑器（1.2.0）
 
 通过 `permissionRoutes` 的角色创建、编辑弹窗使用；下列编辑器属于路由内部实现，不是新增的公开组件导出。
@@ -1609,8 +1644,8 @@ import { RequireAuth } from '@backend-platform/react-toolkit/components/requireP
 说明：
 
 - 导出的仍然是 `RequireAuth` 和 `RequireAuthProps`
-- `components/requirePermission` 在无权限时显示不带返回按钮的 403，`config` 类型为 ky 的 `Options`
-- 根入口与 `components/requireAuth` 提供 `redirectPath`，无权限时带返回按钮，`config` 使用扩展的 `RequestOptions`；选择导入路径时按所需行为区分
+- 该入口复用新版 `RequireAuth`，默认 `extra={null}` 保留不带返回按钮的 403；支持同样的多权限码、错误重试和扩展 `RequestOptions`。
+- 根入口与 `components/requireAuth` 默认显示返回按钮，可通过 `redirectPath` 指定目标。
 
 ## 类型与工具
 
@@ -1663,7 +1698,7 @@ mixedStorage.setItem('debug-key', JSON.stringify({ value: 1 }))
 | `@backend-platform/react-toolkit`                     | 常用组件、hooks、服务、常量、类型、`toolkitStore`、页面、路由片段 |
 | `@backend-platform/react-toolkit/style.css`           | 全局样式                                                          |
 | `@backend-platform/react-toolkit/constants`           | 常量与认证相关类型                                                |
-| `@backend-platform/react-toolkit/services`            | `useAuth`、`useMenuList`、`useGames`                              |
+| `@backend-platform/react-toolkit/services`            | `useAuth`、`AuthStatus`、`useMenuList`、`useGames`                              |
 | `@backend-platform/react-toolkit/types`               | 公共类型                                                          |
 | `@backend-platform/react-toolkit/utils`               | `createVisibilityStoreConfig`、`generateId`、`mixedStorage`       |
 | `@backend-platform/react-toolkit/stores`              | `toolkitStore`、`createToolkitStore` 及各 slice 类型              |
@@ -1678,10 +1713,10 @@ mixedStorage.setItem('debug-key', JSON.stringify({ value: 1 }))
 
 当前根入口公开导出如下：
 
-- 组件：`AuthButton`、`DynamicTags`、`ExpandableParagraph`、`FilterFormWrapper`、`Highlight`、`KeepAlive`、`KeepAliveOutlet`、`KeepAliveProvider`、`Layout`、`Logo`、`RequireAuth`、`RequireGame`、`SelectAll`、`ToolkitProvider`、`UserDropdown`
+- 组件：`AccessDenied`、`PermissionError`、`AuthButton`、`DynamicTags`、`ExpandableParagraph`、`FilterFormWrapper`、`Highlight`、`KeepAlive`、`KeepAliveOutlet`、`KeepAliveProvider`、`Layout`、`Logo`、`RequireAuth`、`RequireGame`、`SelectAll`、`ToolkitProvider`、`UserDropdown`
 - hooks：`useKeepAliveContext`、`useKeepAlive`、`useToolkitStore`、`useDrawer`、`useFormDrawer`、`useDrawerStore`、`useModal`、`useFormModal`、`useModalStore`、`useAuthConfig`、`useAuthMode`、`useIsDirectRole`、`useIsGameScoped`、`useIsGroupBased`、`useIsRoleWithGame`
 - 列表：`QueryList`、`QueryListAction`、`useQueryListStore`、`InfiniteList`、`useInfiniteListStore`
-- 服务：`useAuth`、`useMenuList`、`useGames`
+- 服务与权限状态类型：`useAuth`、`AuthStatus`、`useMenuList`、`useGames`
 - 常量 / 类型 / 工具：`SSO_URL`、`APP_ID_HEADER`、`FRONTEND_ROUTE_PREFIX`、`CheckEndpoint`、`AuthMode`、`AuthConfig`、`WILDCARD`、`Permission`、`MenuListItem`、`RecursivePartial`、`JsonResponse`、`createVisibilityStoreConfig`、`VisibilityState`、`generateId`、`mixedStorage`
 - store / 页面 / 路由：`toolkitStore`、`SignIn`、`NotFound`、`OperationLogList`、`menuRoutes`、`permissionRoutes`
 
