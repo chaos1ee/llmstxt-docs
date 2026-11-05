@@ -1,11 +1,23 @@
-# @flow97/react-toolkit
+# @backend-platform/react-toolkit
 
 基于 React 19、Ant Design 6、React Router 7 与 TanStack Query 5 的中后台工具包。它把后台项目里反复出现的权限校验、菜单加载、应用壳、分页列表、无限滚动列表、弹层表单和页面保活整理成了一套可复用约定。
 
 ## 安装
 
+本文对应已发布的 `@backend-platform/react-toolkit@1.2.1`。该补丁版本修复发布产物缺失主库类型声明的问题。
+
+本包发布在公司 GitLab Registry。安装前，在项目 `.npmrc` 中配置 scope 与 token 环境变量引用：
+
+```ini
+@backend-platform:registry=https://gitlab-ee.funplus.io/api/v4/projects/1751/packages/npm/
+//gitlab-ee.funplus.io/api/v4/projects/1751/packages/npm/:_authToken=${GITLAB_TOKEN}
+//gitlab-ee.funplus.io/api/v4/packages/npm/:_authToken=${GITLAB_TOKEN}
+```
+
+由本机或 CI 环境提供具备包读取权限的 `GITLAB_TOKEN`，然后安装：
+
 ```bash
-pnpm add @flow97/react-toolkit
+pnpm add @backend-platform/react-toolkit@1.2.1
 ```
 
 对等依赖由业务项目提供：
@@ -19,7 +31,7 @@ pnpm add @flow97/react-toolkit
 全局样式只需要引入一次：
 
 ```ts
-import '@flow97/react-toolkit/style.css'
+import '@backend-platform/react-toolkit/style.css'
 ```
 
 ## 快速开始
@@ -29,8 +41,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router'
 
-import { AuthMode, CheckEndpoint, ToolkitProvider } from '@flow97/react-toolkit'
-import '@flow97/react-toolkit/style.css'
+import { AuthMode, CheckEndpoint, ToolkitProvider } from '@backend-platform/react-toolkit'
+import '@backend-platform/react-toolkit/style.css'
 
 import router from './router'
 
@@ -65,11 +77,11 @@ createRoot(document.getElementById('root')!).render(
 常用场景优先从根入口导入；只有当你需要根入口没有暴露的能力时，再走子路径。
 
 ```tsx
-import { Layout, QueryList, ToolkitProvider, useFormModal } from '@flow97/react-toolkit'
+import { Layout, QueryList, ToolkitProvider, useFormModal } from '@backend-platform/react-toolkit'
 
-import { createToolkitStore } from '@flow97/react-toolkit/stores'
-import { PermissionRoutesWrapper } from '@flow97/react-toolkit/routes/permission'
-import zhCN from '@flow97/react-toolkit/locale/zh_CN'
+import { createToolkitStore } from '@backend-platform/react-toolkit/stores'
+import { PermissionRoutesWrapper } from '@backend-platform/react-toolkit/routes/permission'
+import zhCN from '@backend-platform/react-toolkit/locale/zh_CN'
 ```
 
 推荐约定：
@@ -100,7 +112,7 @@ import zhCN from '@flow97/react-toolkit/locale/zh_CN'
 导入：
 
 ```tsx
-import { ToolkitProvider } from '@flow97/react-toolkit'
+import { ToolkitProvider } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -154,7 +166,7 @@ import { ToolkitProvider } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useToolkitStore } from '@flow97/react-toolkit'
+import { useToolkitStore } from '@backend-platform/react-toolkit'
 ```
 
 签名：
@@ -185,7 +197,7 @@ const clear = useToolkitStore(state => state.clear)
 导入：
 
 ```ts
-import { toolkitStore } from '@flow97/react-toolkit'
+import { toolkitStore } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -217,7 +229,7 @@ toolkitStore.getState().clear()
 导入：
 
 ```ts
-import { createToolkitStore } from '@flow97/react-toolkit/stores'
+import { createToolkitStore } from '@backend-platform/react-toolkit/stores'
 ```
 
 签名：
@@ -259,7 +271,7 @@ import type {
   TokenSlice,
   ToolkitState,
   UserInfo,
-} from '@flow97/react-toolkit/stores'
+} from '@backend-platform/react-toolkit/stores'
 ```
 
 说明：
@@ -280,7 +292,7 @@ import type {
 导入：
 
 ```tsx
-import { Layout } from '@flow97/react-toolkit'
+import { Layout } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -311,6 +323,8 @@ import { Layout } from '@flow97/react-toolkit'
 
 - 侧栏宽度、是否可折叠、是否开启游戏域不在 `LayoutProps` 里，而是来自 `ToolkitProvider`
 - `navigation.items` 会先做权限过滤，再渲染到 antd `Menu`
+- 普通菜单项、子菜单和菜单组均支持 `code` 与 `permissionConfig`；`permissionConfig.isGlobalMode` 为 `true` 时按全局模式检查，为 `false` 时按游戏作用域检查，省略时使用 `useAuth` 的默认模式
+- 子项全部被过滤后父菜单也隐藏；权限加载结束且导航数组为空时，侧栏显示 `Nav.emptyDescription`，中文为「暂无菜单」；内容区仍由页面自身的权限保护决定是否显示
 - `gameScoped` 为 `true` 时，顶栏会自动渲染 `GameSelect`
 - 内容区会被 `RequireGame` 包一层；未选择游戏时不会继续渲染子内容
 
@@ -340,7 +354,7 @@ import type {
   GameSelectRouteMode,
   GameSelectRouteModeConfig,
   RouteMatchRule,
-} from '@flow97/react-toolkit'
+} from '@backend-platform/react-toolkit'
 ```
 
 说明：
@@ -361,7 +375,7 @@ import type {
 导入：
 
 ```tsx
-import { AuthButton } from '@flow97/react-toolkit'
+import { AuthButton } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -396,7 +410,7 @@ import { AuthButton } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { RequireAuth } from '@flow97/react-toolkit'
+import { RequireAuth } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -426,7 +440,7 @@ import { RequireAuth } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { RequireGame } from '@flow97/react-toolkit'
+import { RequireGame } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -452,7 +466,7 @@ import { RequireGame } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { UserDropdown } from '@flow97/react-toolkit'
+import { UserDropdown } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -473,7 +487,7 @@ import { UserDropdown } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useAuth } from '@flow97/react-toolkit'
+import { useAuth } from '@backend-platform/react-toolkit'
 ```
 
 签名：
@@ -515,7 +529,7 @@ const { data: canCreate, isLoading } = useAuth('user:create')
 导入：
 
 ```tsx
-import { useMenuList } from '@flow97/react-toolkit'
+import { useMenuList } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -538,7 +552,7 @@ import { useMenuList } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useGames } from '@flow97/react-toolkit'
+import { useGames } from '@backend-platform/react-toolkit'
 ```
 
 `UseGamesOptions`：
@@ -566,7 +580,7 @@ import {
   useIsGameScoped,
   useIsGroupBased,
   useIsRoleWithGame,
-} from '@flow97/react-toolkit'
+} from '@backend-platform/react-toolkit'
 ```
 
 返回值：
@@ -590,7 +604,7 @@ import {
 导入：
 
 ```ts
-import { APP_ID_HEADER, FRONTEND_ROUTE_PREFIX, SSO_URL } from '@flow97/react-toolkit'
+import { APP_ID_HEADER, FRONTEND_ROUTE_PREFIX, SSO_URL } from '@backend-platform/react-toolkit'
 ```
 
 说明：
@@ -606,7 +620,7 @@ import { APP_ID_HEADER, FRONTEND_ROUTE_PREFIX, SSO_URL } from '@flow97/react-too
 导入：
 
 ```ts
-import { AuthMode, CheckEndpoint, WILDCARD, type AuthConfig } from '@flow97/react-toolkit'
+import { AuthMode, CheckEndpoint, WILDCARD, type AuthConfig } from '@backend-platform/react-toolkit'
 ```
 
 说明：
@@ -630,7 +644,7 @@ import { AuthMode, CheckEndpoint, WILDCARD, type AuthConfig } from '@flow97/reac
 导入：
 
 ```tsx
-import { FilterFormWrapper } from '@flow97/react-toolkit'
+import { FilterFormWrapper } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -654,7 +668,7 @@ import { FilterFormWrapper } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { QueryList, QueryListAction } from '@flow97/react-toolkit'
+import { QueryList, QueryListAction } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -734,7 +748,7 @@ import { QueryList, QueryListAction } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useQueryListStore } from '@flow97/react-toolkit'
+import { useQueryListStore } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -773,7 +787,7 @@ await refetch('user-list', { page: 1 })
 导入：
 
 ```tsx
-import { InfiniteList } from '@flow97/react-toolkit'
+import { InfiniteList } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -836,7 +850,7 @@ import { InfiniteList } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useInfiniteListStore } from '@flow97/react-toolkit'
+import { useInfiniteListStore } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -863,7 +877,7 @@ await fetchNextPage('feed-list')
 导入：
 
 ```tsx
-import { SelectAll } from '@flow97/react-toolkit'
+import { SelectAll } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -897,7 +911,7 @@ import { SelectAll } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useModal } from '@flow97/react-toolkit'
+import { useModal } from '@backend-platform/react-toolkit'
 ```
 
 `UseModalProps` 在 antd `ModalProps` 的基础上，去掉了 `open`、`confirmLoading`、`onOk`、`onCancel`，并新增：
@@ -946,7 +960,7 @@ const { show, modal } = useModal({
 导入：
 
 ```tsx
-import { useFormModal } from '@flow97/react-toolkit'
+import { useFormModal } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -981,7 +995,7 @@ import { useFormModal } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useModalStore } from '@flow97/react-toolkit'
+import { useModalStore } from '@backend-platform/react-toolkit'
 ```
 
 返回：
@@ -998,7 +1012,7 @@ import { useModalStore } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useDrawer } from '@flow97/react-toolkit'
+import { useDrawer } from '@backend-platform/react-toolkit'
 ```
 
 `UseDrawerProps` 在 antd `DrawerProps` 基础上，去掉了 `open`、`confirmLoading`、`onClose`、`footer`，并新增：
@@ -1035,7 +1049,7 @@ import { useDrawer } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useFormDrawer } from '@flow97/react-toolkit'
+import { useFormDrawer } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -1055,7 +1069,7 @@ import { useFormDrawer } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useDrawerStore } from '@flow97/react-toolkit'
+import { useDrawerStore } from '@backend-platform/react-toolkit'
 ```
 
 返回：
@@ -1072,7 +1086,7 @@ import { useDrawerStore } from '@flow97/react-toolkit'
 导入：
 
 ```ts
-import { createVisibilityStoreConfig } from '@flow97/react-toolkit'
+import { createVisibilityStoreConfig } from '@backend-platform/react-toolkit'
 ```
 
 签名：
@@ -1104,7 +1118,7 @@ import { createVisibilityStoreConfig } from '@flow97/react-toolkit'
 导入：
 
 ```ts
-import { generateId } from '@flow97/react-toolkit'
+import { generateId } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -1131,7 +1145,7 @@ const id = generateId()
 导入：
 
 ```tsx
-import { KeepAliveProvider } from '@flow97/react-toolkit'
+import { KeepAliveProvider } from '@backend-platform/react-toolkit'
 ```
 
 `KeepAliveProviderProps`：
@@ -1152,7 +1166,7 @@ import { KeepAliveProvider } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { KeepAlive } from '@flow97/react-toolkit'
+import { KeepAlive } from '@backend-platform/react-toolkit'
 ```
 
 `KeepAliveProps`：
@@ -1175,7 +1189,7 @@ import { KeepAlive } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { KeepAliveOutlet } from '@flow97/react-toolkit'
+import { KeepAliveOutlet } from '@backend-platform/react-toolkit'
 ```
 
 `KeepAliveOutletProps`：
@@ -1198,7 +1212,7 @@ import { KeepAliveOutlet } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useKeepAliveContext } from '@flow97/react-toolkit'
+import { useKeepAliveContext } from '@backend-platform/react-toolkit'
 ```
 
 返回值：
@@ -1221,7 +1235,7 @@ import { useKeepAliveContext } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useKeepAlive } from '@flow97/react-toolkit'
+import { useKeepAlive } from '@backend-platform/react-toolkit'
 ```
 
 返回值：
@@ -1247,7 +1261,7 @@ import { useKeepAlive } from '@flow97/react-toolkit'
 导入：
 
 ```ts
-import type { KeepAliveCacheItem } from '@flow97/react-toolkit'
+import type { KeepAliveCacheItem } from '@backend-platform/react-toolkit'
 ```
 
 结构：
@@ -1259,7 +1273,7 @@ import type { KeepAliveCacheItem } from '@flow97/react-toolkit'
 
 更多示例见：
 
-- [KeepAlive 组件说明](./src/components/keepAlive/README.md)
+- [KeepAlive 组件说明](https://gitlab-ee.funplus.io/backend-platform/flow/-/blob/main/packages/react-toolkit/src/components/keepAlive/README.md)
 
 ## 基础展示组件
 
@@ -1270,7 +1284,7 @@ import type { KeepAliveCacheItem } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { DynamicTags } from '@flow97/react-toolkit'
+import { DynamicTags } from '@backend-platform/react-toolkit'
 ```
 
 `DynamicTagsProps`：
@@ -1294,7 +1308,7 @@ import { DynamicTags } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { ExpandableParagraph } from '@flow97/react-toolkit'
+import { ExpandableParagraph } from '@backend-platform/react-toolkit'
 ```
 
 `ExpandableParagraphProps`：
@@ -1312,7 +1326,7 @@ import { ExpandableParagraph } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { Highlight } from '@flow97/react-toolkit'
+import { Highlight } from '@backend-platform/react-toolkit'
 ```
 
 `HighlightProps`：
@@ -1333,7 +1347,7 @@ import { Highlight } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { Logo } from '@flow97/react-toolkit'
+import { Logo } from '@backend-platform/react-toolkit'
 ```
 
 `LogoProps`：
@@ -1352,7 +1366,7 @@ import { Logo } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { useTranslation } from '@flow97/react-toolkit/locale'
+import { useTranslation } from '@backend-platform/react-toolkit/locale'
 ```
 
 返回值：
@@ -1392,7 +1406,7 @@ return <span>{t('global.back')}</span>
 导入：
 
 ```ts
-import type { Locale } from '@flow97/react-toolkit/locale'
+import type { Locale } from '@backend-platform/react-toolkit/locale'
 ```
 
 作用：
@@ -1416,15 +1430,17 @@ import type { Locale } from '@flow97/react-toolkit/locale'
 - `InfiniteList`
 - `Nav`
 
+`1.2.0` 新增必填字段 `PermissionList.searchPlaceholder`，用于权限名称或编码搜索。内置简体中文、英文、日文和韩文文案已补齐；自行维护完整 `Locale` 对象时也需要提供该字段。
+
 ### `locale/*`
 
 导入：
 
 ```ts
-import zhCN from '@flow97/react-toolkit/locale/zh_CN'
-import enGB from '@flow97/react-toolkit/locale/en_GB'
-import jaJP from '@flow97/react-toolkit/locale/ja_JP'
-import koKR from '@flow97/react-toolkit/locale/ko_KR'
+import zhCN from '@backend-platform/react-toolkit/locale/zh_CN'
+import enGB from '@backend-platform/react-toolkit/locale/en_GB'
+import jaJP from '@backend-platform/react-toolkit/locale/ja_JP'
+import koKR from '@backend-platform/react-toolkit/locale/ko_KR'
 ```
 
 说明：
@@ -1447,7 +1463,7 @@ import koKR from '@flow97/react-toolkit/locale/ko_KR'
 导入：
 
 ```tsx
-import { SignIn } from '@flow97/react-toolkit'
+import { SignIn } from '@backend-platform/react-toolkit'
 ```
 
 参数：
@@ -1469,7 +1485,7 @@ import { SignIn } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { NotFound } from '@flow97/react-toolkit'
+import { NotFound } from '@backend-platform/react-toolkit'
 ```
 
 参数：
@@ -1483,7 +1499,7 @@ import { NotFound } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { OperationLogList } from '@flow97/react-toolkit'
+import { OperationLogList } from '@backend-platform/react-toolkit'
 ```
 
 参数：
@@ -1500,7 +1516,7 @@ import { OperationLogList } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { menuRoutes } from '@flow97/react-toolkit'
+import { menuRoutes } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -1519,7 +1535,7 @@ import { menuRoutes } from '@flow97/react-toolkit'
 导入：
 
 ```tsx
-import { permissionRoutes } from '@flow97/react-toolkit'
+import { permissionRoutes } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -1533,12 +1549,38 @@ import { permissionRoutes } from '@flow97/react-toolkit'
 <Route path="permission/*">{permissionRoutes}</Route>
 ```
 
+### 内置角色权限编辑器（1.2.0）
+
+通过 `permissionRoutes` 的角色创建、编辑弹窗使用；下列编辑器属于路由内部实现，不是新增的公开组件导出。
+
+- 支持按权限名称或编码搜索，忽略大小写并去除搜索词首尾空白；有搜索词时自动展开匹配分类，清空后恢复原有折叠状态。
+- 分类可独立展开、折叠。创建和编辑弹窗默认折叠分类；分类全选只操作当前搜索结果中的权限，保留其他已选权限。
+- 权限区域使用固定高度 480px 的滚动视口，仅渲染可见行及缓冲行；每行显示四项权限，长名称截断后可悬停查看完整文本。
+- 在 `AuthMode.DIRECT_ROLE_WITH_GAME` 下，基础权限和游戏权限分区显示，同一时间展开一个游戏的权限区域；可切换当前游戏、添加游戏权限、移除游戏权限，候选项禁用已被其他行选中的游戏。
+- 非游戏角色使用权限码数组；游戏角色使用按游戏 ID 分组的对象，其中 `global` 保存基础权限。提交格式沿用现有接口。
+- 弹窗在确认时读取当前权限编辑值；关闭后重置表单。
+
+权限结构示例（与角色接口的 `permissions` 字段对应）：
+
+```ts
+// 非游戏角色
+const permissions = ['user.list', 'role.list']
+
+// DIRECT_ROLE_WITH_GAME
+const permissionsWithGame = {
+  global: ['user.list'],
+  '1001': ['report.view'],
+}
+```
+
+内置权限列表继续调用 `/api/usystem/user/allPermssions` 或 `/api/usystem/user/allPermissionsV2`；仅 `DIRECT_ROLE_WITH_GAME` 使用后者。开发示例的 10,000 条权限来自 MSW Mock，不改变发布包的生产接口。
+
 ### `PermissionRoutesWrapper`
 
 导入：
 
 ```tsx
-import { PermissionRoutesWrapper } from '@flow97/react-toolkit/routes/permission'
+import { PermissionRoutesWrapper } from '@backend-platform/react-toolkit/routes/permission'
 ```
 
 说明：
@@ -1555,14 +1597,14 @@ import { PermissionRoutesWrapper } from '@flow97/react-toolkit/routes/permission
 导入：
 
 ```tsx
-import { RequireAuth } from '@flow97/react-toolkit/components/requirePermission'
+import { RequireAuth } from '@backend-platform/react-toolkit/components/requirePermission'
 ```
 
 说明：
 
-- 这个子路径当前实现上等价于 `components/requireAuth`
 - 导出的仍然是 `RequireAuth` 和 `RequireAuthProps`
-- 如果没有兼容历史 import 的需求，推荐统一使用 `requireAuth`
+- `components/requirePermission` 在无权限时显示不带返回按钮的 403，`config` 类型为 ky 的 `Options`
+- 根入口与 `components/requireAuth` 提供 `redirectPath`，无权限时带返回按钮，`config` 使用扩展的 `RequestOptions`；选择导入路径时按所需行为区分
 
 ## 类型与工具
 
@@ -1571,7 +1613,7 @@ import { RequireAuth } from '@flow97/react-toolkit/components/requirePermission'
 导入：
 
 ```ts
-import type { JsonResponse, MenuListItem, Permission, RecursivePartial } from '@flow97/react-toolkit'
+import type { JsonResponse, MenuListItem, Permission, RecursivePartial } from '@backend-platform/react-toolkit'
 ```
 
 说明：
@@ -1588,7 +1630,7 @@ import type { JsonResponse, MenuListItem, Permission, RecursivePartial } from '@
 导入：
 
 ```ts
-import { mixedStorage } from '@flow97/react-toolkit'
+import { mixedStorage } from '@backend-platform/react-toolkit'
 ```
 
 作用：
@@ -1612,21 +1654,21 @@ mixedStorage.setItem('debug-key', JSON.stringify({ value: 1 }))
 
 | 子路径                                      | 主要内容                                                          |
 | ------------------------------------------- | ----------------------------------------------------------------- |
-| `@flow97/react-toolkit`                     | 常用组件、hooks、服务、常量、类型、`toolkitStore`、页面、路由片段 |
-| `@flow97/react-toolkit/style.css`           | 全局样式                                                          |
-| `@flow97/react-toolkit/constants`           | 常量与认证相关类型                                                |
-| `@flow97/react-toolkit/services`            | `useAuth`、`useMenuList`、`useGames`                              |
-| `@flow97/react-toolkit/types`               | 公共类型                                                          |
-| `@flow97/react-toolkit/utils`               | `createVisibilityStoreConfig`、`generateId`、`mixedStorage`       |
-| `@flow97/react-toolkit/stores`              | `toolkitStore`、`createToolkitStore` 及各 slice 类型              |
-| `@flow97/react-toolkit/locale`              | `Locale`、`useTranslation`                                        |
-| `@flow97/react-toolkit/locale/*`            | 各语言包 default export                                           |
-| `@flow97/react-toolkit/components/*`        | 对应组件模块子路径                                                |
-| `@flow97/react-toolkit/hooks/drawer`        | drawer 相关 hooks                                                 |
-| `@flow97/react-toolkit/hooks/modal`         | modal 相关 hooks                                                  |
-| `@flow97/react-toolkit/hooks/useAuthConfig` | 认证模式辅助 hooks                                                |
-| `@flow97/react-toolkit/pages/*`             | 内置页面                                                          |
-| `@flow97/react-toolkit/routes/*`            | 内置路由片段                                                      |
+| `@backend-platform/react-toolkit`                     | 常用组件、hooks、服务、常量、类型、`toolkitStore`、页面、路由片段 |
+| `@backend-platform/react-toolkit/style.css`           | 全局样式                                                          |
+| `@backend-platform/react-toolkit/constants`           | 常量与认证相关类型                                                |
+| `@backend-platform/react-toolkit/services`            | `useAuth`、`useMenuList`、`useGames`                              |
+| `@backend-platform/react-toolkit/types`               | 公共类型                                                          |
+| `@backend-platform/react-toolkit/utils`               | `createVisibilityStoreConfig`、`generateId`、`mixedStorage`       |
+| `@backend-platform/react-toolkit/stores`              | `toolkitStore`、`createToolkitStore` 及各 slice 类型              |
+| `@backend-platform/react-toolkit/locale`              | `Locale`、`useTranslation`                                        |
+| `@backend-platform/react-toolkit/locale/*`            | 各语言包 default export                                           |
+| `@backend-platform/react-toolkit/components/*`        | 对应组件模块子路径                                                |
+| `@backend-platform/react-toolkit/hooks/drawer`        | drawer 相关 hooks                                                 |
+| `@backend-platform/react-toolkit/hooks/modal`         | modal 相关 hooks                                                  |
+| `@backend-platform/react-toolkit/hooks/useAuthConfig` | 认证模式辅助 hooks                                                |
+| `@backend-platform/react-toolkit/pages/*`             | 内置页面                                                          |
+| `@backend-platform/react-toolkit/routes/*`            | 内置路由片段                                                      |
 
 当前根入口公开导出如下：
 
