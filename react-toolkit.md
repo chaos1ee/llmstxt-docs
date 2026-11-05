@@ -4,7 +4,7 @@
 
 ## 安装
 
-本文对应已发布的 `@backend-platform/react-toolkit@1.2.1`。该补丁版本修复发布产物缺失主库类型声明的问题。
+本文对应已发布的 `@backend-platform/react-toolkit@1.3.0`。该版本新增 `Layout.navigation.permissionConfig`，用于配置导航权限请求的默认作用域及请求参数。
 
 本包发布在公司 GitLab Registry。安装前，在项目 `.npmrc` 中配置 scope 与 token 环境变量引用：
 
@@ -17,7 +17,7 @@
 由本机或 CI 环境提供具备包读取权限的 `GITLAB_TOKEN`，然后安装：
 
 ```bash
-pnpm add @backend-platform/react-toolkit@1.2.1
+pnpm add @backend-platform/react-toolkit@1.3.0
 ```
 
 对等依赖由业务项目提供：
@@ -313,7 +313,7 @@ import { Layout } from '@backend-platform/react-toolkit'
 
 相关类型：
 
-- `NavigationConfig`：`{ items?: NavItem[]; loading?: boolean }`
+- `NavigationConfig`：`{ items?: NavItem[]; loading?: boolean; permissionConfig?: RequestOptions }`
 - `HeaderExtra`：`{ key: Key; children: ReactNode }`
 - `HeaderExtraConfig`：`{ left?: HeaderExtra[]; right?: HeaderExtra[] }`
 - `GameSelectConfig<T>`：`filter`、`options`、`routeModeRules`、`onChange`
@@ -323,7 +323,9 @@ import { Layout } from '@backend-platform/react-toolkit'
 
 - 侧栏宽度、是否可折叠、是否开启游戏域不在 `LayoutProps` 里，而是来自 `ToolkitProvider`
 - `navigation.items` 会先做权限过滤，再渲染到 antd `Menu`
-- 普通菜单项、子菜单和菜单组均支持 `code` 与 `permissionConfig`；`permissionConfig.isGlobalMode` 为 `true` 时按全局模式检查，为 `false` 时按游戏作用域检查，省略时使用 `useAuth` 的默认模式
+- `navigation.permissionConfig` 为普通菜单项、子菜单和菜单组设置默认权限请求配置；`isGlobalMode: true` 发送 `App-ID: global`，`false` 使用当前游戏，未配置时保持原有默认行为
+- 菜单项的 `permissionConfig` 覆盖导航默认配置；同一权限码在全局和游戏作用域中分别查询与判断，保持作用域隔离
+- 菜单项的 `permissionConfig` 仅用于权限检查，不会传给 antd `Menu` 或 DOM 元素
 - 子项全部被过滤后父菜单也隐藏；权限加载结束且导航数组为空时，侧栏显示 `Nav.emptyDescription`，中文为「暂无菜单」；内容区仍由页面自身的权限保护决定是否显示
 - `gameScoped` 为 `true` 时，顶栏会自动渲染 `GameSelect`
 - 内容区会被 `RequireGame` 包一层；未选择游戏时不会继续渲染子内容
@@ -334,7 +336,11 @@ import { Layout } from '@backend-platform/react-toolkit'
 <Layout
   title="Flow Admin"
   subtitle="Console"
-  navigation={{ items: navItems, loading: isMenuLoading }}
+  navigation={{
+    items: navItems,
+    loading: isMenuLoading,
+    permissionConfig: { isGlobalMode: true },
+  }}
   gameSelect={{
     routeModeRules: [{ rule: { path: '/overview', end: true }, mode: 'bypass' }],
     onChange: value => console.log('current game:', value),
