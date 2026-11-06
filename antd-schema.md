@@ -1,4 +1,4 @@
-# @flow97/antd-schema
+# @backend-platform/antd-schema
 
 把后台页面描述成 Schema，而不是手写一整页 React 组件。这个包适合“页面结构重复、字段和动作经常变化、希望把页面定义数据化”的场景。
 
@@ -17,8 +17,10 @@
 
 ## 安装
 
+本文对应 `@backend-platform/antd-schema@1.0.1`，该版本将 React Toolkit 依赖升级为 `^2.0.0`。安装前先配置公司 GitLab Registry，配置见 [React Toolkit 安装说明](./react-toolkit.md#安装)。
+
 ```bash
-pnpm add @flow97/antd-schema
+pnpm add @backend-platform/antd-schema@1.0.1
 ```
 
 常见依赖组合：
@@ -26,13 +28,13 @@ pnpm add @flow97/antd-schema
 - `react` / `react-dom`
 - `antd`
 - `react-router`
-- `@flow97/react-toolkit`
+- `@backend-platform/react-toolkit` `^2.0.0`
 
 ## 最小示例
 
 ```tsx
-import { SchemaRenderer } from '@flow97/antd-schema'
-import type { ViewportSchema } from '@flow97/antd-schema'
+import { SchemaRenderer } from '@backend-platform/antd-schema'
+import type { ViewportSchema } from '@backend-platform/antd-schema'
 
 const schema: ViewportSchema = {
   type: 'viewport',
@@ -75,10 +77,6 @@ export default function UsersPage() {
 - 页面交互高度定制
 - 组件状态机复杂
 - 直接写 JSX 明显更简单的页面
-
-## 文档导航
-
-- [架构说明](./ARCHITECTURE.md)
 
 ## Schema 字段参考（由 `src/schemas` 定义）
 
